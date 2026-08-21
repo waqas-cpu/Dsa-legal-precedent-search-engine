@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JurisSearch — Legal Precedent Search Engine</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Background Gradient Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo-area">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="logo-text">
+                    <h1>JurisSearch</h1>
+                    <span>Precedent & Citation Engine</span>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="stats-bar" id="stats-bar">
+                <div class="stat-badge">
+                    <span class="stat-label">Cases</span>
+                    <span class="stat-value" id="stat-cases">-</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Vocabulary</span>
+                    <span class="stat-value" id="stat-vocab">-</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Overruled</span>
+                    <span class="stat-value text-red" id="stat-overruled">-</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Max PageRank</span>
+                    <span class="stat-value text-gold" id="stat-pagerank">-</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-bar-wrapper">
+                <div class="search-input-container">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search case law, citations, or legal concepts (use quotes for phrase query, e.g. &quot;separate but equal&quot;)..." autocomplete="off">
+                    <button id="search-btn">Search</button>
+                </div>
+
+                <!-- Suggestions Dropdown -->
+                <div class="suggestions-dropdown" id="suggestions">
+                    <!-- Suggested content injected here -->
+                </div>
+            </div>
+
+            <!-- Advanced Config Toggle -->
+            <div class="advanced-toggle">
+                <button id="toggle-config-btn">
+                    <span>Rank Tuning & Filters</span>
+                    <svg id="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Advanced Config Panel -->
+            <div class="config-panel hidden" id="config-panel">
+                <div class="config-grid">
+                    <div class="slider-group">
+                        <label for="weight-alpha">Text Relevance (BM25: α): <span id="val-alpha">0.50</span></label>
+                        <input type="range" id="weight-alpha" min="0" max="1" step="0.05" value="0.50">
+                    </div>
+                    <div class="slider-group">
+                        <label for="weight-beta">Authority Weight (PageRank: β): <span id="val-beta">0.25</span></label>
+                        <input type="range" id="weight-beta" min="0" max="1" step="0.05" value="0.25">
+                    </div>
+                    <div class="slider-group">
+                        <label for="weight-gamma">Court Tier Bias (Hierarchy: γ): <span id="val-gamma">0.15</span></label>
+                        <input type="range" id="weight-gamma" min="0" max="1" step="0.05" value="0.15">
+                    </div>
+                    <div class="slider-group">
+                        <label for="weight-delta">Recency Preference (Decay: δ): <span id="val-delta">0.10</span></label>
+                        <input type="range" id="weight-delta" min="0" max="1" step="0.05" value="0.10">
+                    </div>
+                </div>
+                <div class="filter-controls">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="exclude-overruled-check">
+                        <span class="checkmark"></span>
+                        Exclude Overruled Decisions (Hard Filter)
+                    </label>
+
+                    <div class="court-filter">
+                        <label for="court-select">Jurisdiction Level:</label>
+                        <select id="court-select">
+                            <option value="">All Levels</option>
+                            <option value="1">Level 1: Supreme Court</option>
+                            <option value="2">Level 2: Appellate / Circuit Courts</option>
+                            <option value="3">Level 3: Trial / District Courts</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+            <!-- Results Column -->
+            <section class="results-column">
+                <div class="results-header">
+                    <span id="results-count">Type a query above to explore.</span>
+                    <span id="query-time" class="query-time"></span>
+                </div>
+                <div class="results-list" id="results-list">
+                    <!-- Sample seeded search result state -->
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        <h3>Explore Landmark Cases</h3>
+                        <p>Search legal terms like <em>"equal protection"</em>, <em>"due process"</em>, or landmark case terms like <em>"self-incrimination"</em> or <em>"deference"</em> to see composite scoring in action.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Case Details Column -->
+            <section class="details-column empty" id="details-column">
+                <div class="details-placeholder" id="details-placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    <p>Select a case from search results to inspect details, explore opinions, and visualize citation networks.</p>
+                </div>
+
+                <div class="details-content hidden" id="details-content">
+                    <div class="details-header-card">
+                        <div class="details-badges">
+                            <span class="badge" id="details-court-badge">-</span>
+                            <span class="badge text-red hidden" id="details-overruled-badge">OVERRULED</span>
+                            <span class="badge text-caution hidden" id="details-caution-badge">CAUTION</span>
+                        </div>
+                        <h2 id="details-name">-</h2>
+                        <div class="details-meta">
+                            <div><strong>Citation:</strong> <span id="details-citation">-</span></div>
+                            <div><strong>Jurisdiction:</strong> <span id="details-jurisdiction">-</span></div>
+                            <div><strong>Decided:</strong> <span id="details-date">-</span></div>
+                            <div><strong>Judges:</strong> <span id="details-judges">-</span></div>
+                            <div><strong>Authority (PR):</strong> <span id="details-pagerank" class="text-gold">-</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs Menu -->
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="tab-opinion">Opinion Text</button>
+                        <button class="tab-btn" data-tab="tab-citation-graph">Citation Graph</button>
+                        <button class="tab-btn" data-tab="tab-score-breakdown">Rank Breakdown</button>
+                    </div>
+
+                    <!-- Tab Opinion -->
+                    <div class="tab-pane active" id="tab-opinion">
+                        <div class="opinion-viewer" id="details-opinion">
+                            <!-- Opinion text injected -->
+                        </div>
+                    </div>
+
+                    <!-- Tab Citation Graph -->
+                    <div class="tab-pane" id="tab-citation-graph">
+                        <div class="graph-legend">
+                            <span class="legend-item"><span class="legend-dot followed"></span> Followed</span>
+                            <span class="legend-item"><span class="legend-dot generally"></span> Cited Generally</span>
+                            <span class="legend-item"><span class="legend-dot distinguished"></span> Distinguished</span>
+                            <span class="legend-item"><span class="legend-dot overruled"></span> Overruled</span>
+                        </div>
+                        <div class="graph-container">
+                            <svg id="citation-svg" width="100%" height="450" viewBox="0 0 600 450"></svg>
+                        </div>
+                    </div>
+
+                    <!-- Tab Score Breakdown -->
+                    <div class="tab-pane" id="tab-score-breakdown">
+                        <div class="breakdown-container">
+                            <h3>Composite Rank Formulation</h3>
+                            <div class="breakdown-chart" id="breakdown-chart">
+                                <!-- Dynamic progress bars will represent score component percentages -->
+                            </div>
+                            <div class="breakdown-formula">
+                                <p><strong>Formula:</strong></p>
+                                <div class="formula-box">
+                                    Final = α · BM25_norm + β · PR_norm + γ · Court_weight + δ · Recency_boost
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="/static/app.js"></script>
+</body>
+</html>
